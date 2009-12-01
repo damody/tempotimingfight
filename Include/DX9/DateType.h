@@ -1,4 +1,19 @@
+/*
+Copyright (C) 2009  遊戲天亮界
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef _DATATYPE_
 #define _DATATYPE_
 
@@ -11,15 +26,11 @@ struct fColor //專門存顏色的結構可輸出 unsigned char[4]
 {
 	union {
 		float Color[4];
-		struct {
-			float A,R,G,B;
-		};
+		float A,R,G,B;
 	};
 	union {
 		unsigned char cColor[4];
-		struct {
-			unsigned char cA,cR,cG,cB;
-		};
+		unsigned char cA,cR,cG,cB;
 	};
 	fColor()
 	{

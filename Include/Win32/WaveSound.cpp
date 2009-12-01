@@ -13,14 +13,13 @@ dsSound::~dsSound()
 
 
 //建立聲音檔
-bool dsSound::Create(LPCTSTR file , DWORD flags, LPDIRECTSOUND8 ds_DS, DWORD Frequency, 
-					 LONG Pan, LONG Volume, bool isLooping)
+bool dsSound::Create(LPCTSTR file , DWORD flags, LPDIRECTSOUND8 ds_DS,bool isLooping)
 {
 	HMMIO mmIO = NULL ;
 	MMCKINFO mmRiff ;
 	MMCKINFO mmChunk ;
 	bool ok ;
-	LPDIRECTSOUNDBUFFER buffer1;
+	LPDIRECTSOUNDBUFFER buffer1=NULL;
 	//判定介面是否已建立
 	if( !ds_DS ) 
 		return false ;
@@ -58,7 +57,7 @@ bool dsSound::Create(LPCTSTR file , DWORD flags, LPDIRECTSOUND8 ds_DS, DWORD Fre
 		desc.dwSize = sizeof( desc );
 		desc.dwBufferBytes = m_Size ;
 		desc.lpwfxFormat = &m_Format ;
-		desc.dwFlags = 2 ;
+		desc.dwFlags = flags ;
 		ok = ds_DS->CreateSoundBuffer( &desc , &buffer1 , NULL ) == DS_OK;
 	}
 	//建立DX8聲音緩衝區
@@ -80,10 +79,7 @@ bool dsSound::Create(LPCTSTR file , DWORD flags, LPDIRECTSOUND8 ds_DS, DWORD Fre
 		}
 		//關掉音檔
 		mmioClose( mmIO , 0 );
-		//設定頻率、聲道、音量
-		m_Buffer->SetFrequency(Frequency);
-		m_Buffer->SetPan(Pan);
-		m_Buffer->SetVolume(Volume);
+
 		m_isLooping = isLooping;
 
 		return ok ;
@@ -319,13 +315,12 @@ bool dsDuplicate::Pause(int index)
 }
 // 建立
 
-bool dsDuplicate::Duplicate(LPCTSTR file , DWORD flags, int num, LPDIRECTSOUND8 ds_DS, 
-							DWORD Frequency, LONG Pan, LONG Volume, bool isLooping)
+bool dsDuplicate::Duplicate(LPCTSTR file , DWORD flags, int num, LPDIRECTSOUND8 ds_DS, bool isLooping)
 {
 	int i ;
 	Release();
 	//建立資料緩衝區
-	if( !Create(file , flags, ds_DS, Frequency, Pan, Volume, isLooping))
+	if( !Create(file , flags, ds_DS, isLooping))
 		return false;
 	//建立重複播放緩衝區介面記憶體
 	m_Duplicate = (LPDIRECTSOUNDBUFFER8*)malloc(sizeof( LPDIRECTSOUNDBUFFER ) * num);
@@ -343,13 +338,6 @@ bool dsDuplicate::Duplicate(LPCTSTR file , DWORD flags, int num, LPDIRECTSOUND8 
 
 	}
 	m_Num = num ;
-	//設定頻率、聲道、音量
-	for (int forindex = 0; forindex < num; forindex++)
-	{
-		m_Duplicate[forindex]->SetFrequency(Frequency);
-		m_Duplicate[forindex]->SetPan(Pan);
-		m_Duplicate[forindex]->SetVolume(Volume);
-	}
 	return true ;
 }
 
@@ -367,7 +355,6 @@ void dsDuplicate::MoveDuplicateParameters( int index , DWORD Frequency, LONG Pan
 	DWORD oF ;
 	LONG oP ;
 	LONG oV	;
-	return ;
 	//頻率
 	if(m_Duplicate[index]->GetFrequency(&oF) == DS_OK)
 		if (Frequency + oF >= 100 && Frequency + oF <= 200000)
@@ -433,70 +420,90 @@ WavSound::WavSound(HWND hWnd , DWORD Channels, DWORD Freq, DWORD BitRate)
 	isStart = true;
 }
 
-bool WavSound::CreatSound(const char* filename, wchar_t* index, DWORD frequency, 
-						  LONG pan, LONG volume)
+bool WavSound::CreatSound(const char* filename, wchar_t* index)
 {
+	wchar_t *id = new wchar_t[wcslen(index) + 1];
+	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
+	if(m_SoundMap.find(id) != m_SoundMap.end())
+	{
+		delete[] id;
+		return false;
+	}
+
 	dsSound *newsound = new dsSound();
 	wchar_t *w_filename = new wchar_t[strlen(filename) + 2];
 	AnsiToUnicode(w_filename, filename);
-	if (!newsound->Create((LPCTSTR)w_filename, DSBCAPS_CTRLFREQUENCY || DSBCAPS_CTRLPAN || 
-		DSBCAPS_CTRLVOLUME, ds_DS, frequency, pan, volume))
+	if (!newsound->Create((LPCTSTR)w_filename, DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | 
+		DSBCAPS_CTRLPAN  , ds_DS))
 	{
 		delete[] w_filename;
+		delete[] id;
 		return false;
 	}
 	delete[] w_filename;
-	wchar_t *id = new wchar_t[wcslen(index) + 1];
-	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
 	m_SoundMap.insert(std::make_pair(id, newsound));
 	return true;
 }
 
-bool WavSound::CreatSound(const char* filename, wchar_t* index, int dupnum,
-						  DWORD frequency, LONG pan, LONG volume)
+bool WavSound::CreatSound(const char* filename, wchar_t* index, int dupnum)
 {
+	wchar_t *id = new wchar_t[wcslen(index) + 1];
+	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
+	if(m_SoundMap.find(id) != m_SoundMap.end())
+	{
+		delete[] id;
+		return false;
+	}
+
 	dsDuplicate *newdupsound = new dsDuplicate();
 	wchar_t *w_filename = new wchar_t[strlen(filename) + 2];
 	AnsiToUnicode(w_filename, filename);
-	if(!newdupsound->Duplicate((LPCTSTR)w_filename, DSBCAPS_CTRLFREQUENCY || DSBCAPS_CTRLPAN || 
-		DSBCAPS_CTRLVOLUME, dupnum, ds_DS, frequency, pan, volume))
+	if(!newdupsound->Duplicate((LPCTSTR)w_filename, DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | 
+		DSBCAPS_CTRLPAN , dupnum, ds_DS))
 	{
 		delete[] w_filename;
 		return false;
 	}
 	delete[] w_filename;
-	wchar_t *id = new wchar_t[wcslen(index) + 1];
-	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
 	m_DupSoundMap.insert(std::make_pair(id, newdupsound));
 	return true;
 }
 
-bool WavSound::CreatSound(wchar_t* filename, wchar_t* index, DWORD frequency, 
-						  LONG pan, LONG volume)
+bool WavSound::CreatSound(wchar_t* filename, wchar_t* index)
 {
+	wchar_t *id = new wchar_t[wcslen(index) + 1];
+	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
+	if(m_SoundMap.find(id) != m_SoundMap.end())
+	{
+		delete[] id;
+		return false;
+	}
+
 	dsSound *newsound = new dsSound();
-	if (!newsound->Create((LPCTSTR)filename, DSBCAPS_CTRLFREQUENCY || DSBCAPS_CTRLPAN || 
-		DSBCAPS_CTRLVOLUME, ds_DS, frequency, pan, volume))
+	if (!newsound->Create((LPCTSTR)filename, DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | 
+		DSBCAPS_CTRLPAN , ds_DS))
 	{
 		return false;
 	}
-	wchar_t *id = new wchar_t[wcslen(index) + 1];
-	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
 	m_SoundMap.insert(std::make_pair(id, newsound));
 	return true;
 }
 
-bool WavSound::CreatSound(wchar_t* filename, wchar_t* index, int dupnum,
-						  DWORD frequency, LONG pan, LONG volume)
+bool WavSound::CreatSound(wchar_t* filename, wchar_t* index, int dupnum)
 {
+	wchar_t *id = new wchar_t[wcslen(index) + 1];
+	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
+	if(m_SoundMap.find(id) != m_SoundMap.end())
+	{
+		delete[] id;
+		return false;
+	}
 	dsDuplicate *newdupsound = new dsDuplicate();
-	if(!newdupsound->Duplicate((LPCTSTR)filename, DSBCAPS_CTRLFREQUENCY || DSBCAPS_CTRLPAN || 
-		DSBCAPS_CTRLVOLUME, dupnum, ds_DS, frequency, pan, volume))
+	if(!newdupsound->Duplicate((LPCTSTR)filename, DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME | 
+		DSBCAPS_CTRLPAN , dupnum, ds_DS))
 	{
 		return false;
 	}
-	wchar_t *id = new wchar_t[wcslen(index) + 1];
-	wcsncpy_s(id, wcslen(index) + 1, index, wcslen(index) + 1);
 	m_DupSoundMap.insert(std::make_pair(id, newdupsound));
 	return true;
 }

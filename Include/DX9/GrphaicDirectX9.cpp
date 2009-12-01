@@ -1,6 +1,21 @@
+/*
+Copyright (C) 2009  遊戲天亮界
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "GrphaicDirectX9.h"
-
+#include <cassert>
 
 GrphaicDirectX9::GrphaicDirectX9( HWND hWnd ):m_hWnd(hWnd),m_pD3D(NULL),m_pD3DDevice(NULL)
 {
@@ -21,14 +36,14 @@ bool GrphaicDirectX9::InitDevice()
 	if ( w==0 || h==0 )
 		return false;
 
-	int multisamples = 0;
+	int multisamples = 2;
 
 	// `取得一個D3D9物件, 它的唯一功用是去開啟真正可以拿來繪圖的D3D9 Device.`
 	if( NULL == ( m_pD3D = Direct3DCreate9( D3D_SDK_VERSION ) ) )
 		return false;
 
 	ZeroMemory( &m_pD3DPresent, sizeof(m_pD3DPresent) );
-	m_pD3DPresent.Windowed = TRUE;
+	m_pD3DPresent.Windowed = true;
 	m_pD3DPresent.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	m_pD3DPresent.BackBufferFormat = D3DFMT_UNKNOWN;
 	m_pD3DPresent.BackBufferCount = 1; // `提供一塊backbuffer`
@@ -39,7 +54,6 @@ bool GrphaicDirectX9::InitDevice()
 	m_pD3DPresent.BackBufferWidth = 1280;
 	m_pD3DPresent.BackBufferHeight = 800;
 	bool device_initialized = false;
-
 	/*
 
 	`試著用4種不同方法來開啟d3d9`
@@ -305,4 +319,23 @@ LPD3DXEFFECT GrphaicDirectX9::LoadFXShader( const wchar_t *fullpath )
 LPDIRECT3D9 GrphaicDirectX9::GetD3D9( void )
 {
 	return m_pD3D;
+}
+
+int GrphaicDirectX9::CheckDevice()
+{
+	HRESULT hr;
+	assert(m_pD3DDevice != NULL); //fail device
+	//測試獨占模式，請參閱DX8文件
+	if( FAILED( hr = m_pD3DDevice->TestCooperativeLevel() ) )
+	{
+		// 如果裝置遺失，不要Render，表示被使用者“切”出去視窗了？
+		if( D3DERR_DEVICELOST == hr )
+			return DeviceState(LOST);
+		// 如果需要重置(又切回來了？)就重置
+		if( D3DERR_DEVICENOTRESET == hr )
+		{
+			return DeviceState(RESET);
+		}
+	}
+	return DeviceState(NORMAL);
 }

@@ -34,8 +34,7 @@ public :
 	bool RePlay();
 	bool Pause();
 	//載入音檔並建立
-	bool Create( LPCTSTR file, DWORD flags, LPDIRECTSOUND8 ds_DS, DWORD Frequency, 
-		LONG Pan, LONG Volume, bool isLooping = false);
+	bool Create( LPCTSTR file, DWORD flags, LPDIRECTSOUND8 ds_DS, bool isLooping = false);
 	//釋放建立的音檔
 	void Release();
 	//設定是否進行循環
@@ -68,8 +67,7 @@ public :
 	bool RePlay(int index);
 	bool Pause(int index);
 	//建立多重音檔的函數
-	bool Duplicate( LPCTSTR file, DWORD flags, int num, LPDIRECTSOUND8 ds_DS ,DWORD Frequency, 
-		LONG Pan, LONG Volume, bool isLooping = false);
+	bool Duplicate( LPCTSTR file, DWORD flags, int num, LPDIRECTSOUND8 ds_DS, bool isLooping = false);
 	//加減頻率、聲道、音量
 	void MoveDuplicateParameters( int index, DWORD Frequency, LONG Pan, LONG Volume);
 	//對此class做初始化
@@ -102,17 +100,13 @@ public:
 	WavSound(HWND hWnd , DWORD Channels = 2 , DWORD Freq =  22050 , DWORD BitRate = 16);
 	~WavSound();
 	//載入並建立一個單一音檔,檔名用char*
-	bool CreatSound(const char* filename, wchar_t* index, DWORD frequency, LONG pan, 
-		LONG volume);
+	bool CreatSound(const char* filename, wchar_t* index);
 	//載入並建立一個有dupnum個內容的多重音檔,檔名用char*
-	bool CreatSound(const char* filename, wchar_t* index, int dupnum, DWORD frequency, 
-		LONG pan, LONG volume);
+	bool CreatSound(const char* filename, wchar_t* index, int dupnum);
 	//載入並建立一個單一音檔,檔名用wchar_t*
-	bool CreatSound(wchar_t* filename, wchar_t* index, DWORD frequency, LONG pan, 
-		LONG volume);
+	bool CreatSound(wchar_t* filename, wchar_t* index);
 	//載入並建立一個有dupnum個內容的多重音檔,檔名用wchar_t*
-	bool CreatSound(wchar_t* filename, wchar_t* index, int dupnum, DWORD frequency, 
-		LONG pan, LONG volume);
+	bool CreatSound(wchar_t* filename, wchar_t* index, int dupnum);
 	//停止目前所有音檔
 	void StopDevice();
 	//播放使用StopDevice()之前還在播放的音檔

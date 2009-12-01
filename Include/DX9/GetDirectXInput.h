@@ -1,4 +1,19 @@
+/*
+Copyright (C) 2009  ¹CÀ¸¤Ñ«G¬É
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef GetDirectXInput_Im3dd5ea1em122a5716625mm7e5f_H
 #define GetDirectXInput_Im3dd5ea1em122a5716625mm7e5f_H
 
@@ -55,6 +70,7 @@ public:
 	void RegisterKeyDown(int key, void (*pKeyDownFunc)(void));
 	void RegisterKeyUp  (int key, void (*pKeyDownUp)(void));
 	void RegisterKeyPressed(int key, void (*pKeyDownPressed)(void));
+#pragma warning (disable:4100) //disable warning 'pContext' : unreferenced formal parameter
 	static BOOL CALLBACK EnumJoysticksCallback( const DIDEVICEINSTANCE* pdidInstance, VOID* pContext )
 	{
 		HRESULT hr;
@@ -64,6 +80,7 @@ public:
 			return DIENUM_CONTINUE;
 		return DIENUM_STOP;
 	}
+#pragma warning (default:4100)
 private:	
 	HWND	 m_hWnd;
 	HINSTANCE m_Instance;
