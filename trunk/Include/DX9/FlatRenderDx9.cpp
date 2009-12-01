@@ -1,7 +1,20 @@
-//此程式碼屬於 天亮damody,翼光城W.S.C. 及「遊戲天亮界」的遊戲開發團隊的程式師共同所有
-//#include "stdafx.h"
+/*
+Copyright (C) 2009  遊戲天亮界
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "FlatRenderDx9.h"
-#include <iostream> // not required by most systems
 #include <assert.h>
 #define SAFE_RELEASE(x) if (x) { x->Release(); x=NULL; }
 #define RELEASE_ARRAY(x) if (x) { delete [] x; x=NULL; }
@@ -24,6 +37,8 @@ void FlatRenderDx9::SetRenderRect(RECT rect)
 	m_HandledWidth = 2 / (float)m_Width;
 	m_HandledHeight = 2 / (float)m_Height;
 }
+
+
 bool FlatRenderDx9::LoadPicture(const wchar_t* filepath, const wchar_t* id)
 {
 	m_MapPos = m_TextureMap.find(id);
@@ -1145,21 +1160,22 @@ void FlatRenderDx9::SaveNow( int w, int h, int picFormat, const wchar_t* id )
 	m_device->GetBackBuffer(0,0, D3DBACKBUFFER_TYPE_MONO, &surface);
 	switch (picFormat)
 	{
-	case SAVE_FORMAT_BMP:
+	case SaveFormat(BMP):
 		D3DXSaveSurfaceToFile(id, D3DXIFF_BMP, surface, NULL, NULL);
 		break;
-	case SAVE_FORMAT_TGA:
+	case SaveFormat(TGA):
 		D3DXSaveSurfaceToFile(id, D3DXIFF_TGA, surface, NULL, NULL);
 		break;
-	case SAVE_FORMAT_PNG:
+	case SaveFormat(PNG):
 		D3DXSaveSurfaceToFile(id, D3DXIFF_PNG, surface, NULL, NULL);
 		break;
-	case SAVE_FORMAT_JPG:
+	case SaveFormat(JPG):
 		D3DXSaveSurfaceToFile(id, D3DXIFF_JPG, surface, NULL, NULL);
 		break;
-	case SAVE_FORMAT_DDS:
+	case SaveFormat(DDS):
 		D3DXSaveSurfaceToFile(id, D3DXIFF_DDS, surface, NULL, NULL);
 		break;
 	}
 	surface->Release();
 }
+

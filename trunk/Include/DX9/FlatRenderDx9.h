@@ -1,5 +1,19 @@
-//此程式碼屬於 天亮damody,翼光城W.S.C. 及「遊戲天亮界」的遊戲開發團隊的程式師共同所有
-//此類別目前為3.0版
+/*
+Copyright (C) 2009  遊戲天亮界
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #ifndef FlatRenderDx9_Im5b0fc51m122c45fb3b7mm7e5f_H
 #define FlatRenderDx9_Im5b0fc51m122c45fb3b7mm7e5f_H
@@ -18,9 +32,9 @@ const int D3DFVF_VERTEX = (D3DFVF_XYZ | D3DFVF_TEX1);
 const int MAX_LAYER = 6;
 //正常版頂點結構
 
-enum SAVE_FORMAT
+enum SaveFormat
 {
-	SAVE_FORMAT_BMP,SAVE_FORMAT_JPG,SAVE_FORMAT_PNG,SAVE_FORMAT_TGA,SAVE_FORMAT_DDS
+	BMP,JPG,PNG,TGA,DDS
 };
 
 class FlatRenderDx9 
@@ -29,12 +43,12 @@ public:
 	FlatRenderDx9() {};
 	FlatRenderDx9(LPDIRECT3DDEVICE9 device);
 	~FlatRenderDx9();
-	void SetRenderRect(RECT rect);	
+	void SetRenderRect(RECT rect);
 	bool LoadPicture(const wchar_t* filepath, const wchar_t* id);
 	bool LoadBmpMem(unsigned char *BmpPic, int w, int h, int per_bytes, const wchar_t* id);
 	bool LoadTgaMem(unsigned char *TgaPic, int w, int h, int per_bytes, const wchar_t* id);
 	bool LoadMapMem(EditBitMap &bitmap, const wchar_t* id);
-	void SaveNow(int w, int h, int picFormat, const wchar_t* id);
+	void SaveNow(int w, int h, int picFormat, const wchar_t* id);	
 	//開始渲染
 	void BeginRender();
 	//負責每幀的渲染

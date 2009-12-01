@@ -1,8 +1,24 @@
-//此程式碼屬於 天亮damody,翼光城W.S.C. 及「遊戲天亮界」的遊戲開發團隊的程式師共同所有
+/*
+Copyright (C) 2009  遊戲天亮界
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "LuaCell.h"
 #include <cstdio>
 #include <stdarg.h>
 #include <assert.h>
+#include <cstring>
 
 LuaCell::LuaCell()
 {
@@ -31,7 +47,7 @@ bool LuaCell::callLua_Function(const char* functionName)
 	}
 	return false;
 }
-
+//format： callLua_Function("GetTime", "fis>ii", 1.0f, 2, "3", *int, *int);
 bool LuaCell::callLua_Function( const char* functionName, const char* signString, ... )
 {
 	va_list v1;
@@ -75,7 +91,7 @@ emdargs:
 		switch (*signString++)
 		{
 		case 'f':
-			*va_arg(v1, float *) = (float)lua_tonumber(m_LuaState, nres);
+			*va_arg(v1, double *) = lua_tonumber(m_LuaState, nres);
 			break;
 		case 'i':
 			*va_arg(v1, int *) = lua_tointeger(m_LuaState, nres);
@@ -92,21 +108,22 @@ emdargs:
 	va_end(v1);
 	return true;
 }
+//if success return true
 bool LuaCell::InputLuaFile(const char* path)
 {
 	if (luaL_loadfile(m_LuaState, path) || lua_pcall(m_LuaState, 0, 0, 0)) return false;
 	return true;
 }
 
-
 // int LuaCell::getLua_Int(const char* variable)
 // {
 // 	lua_getglobal(m_LuaState, variable);
-// 	int value = lua_tointeger(m_LuaState, -1);
+// 	int result = lua_tointeger(m_LuaState, -1);
 // 	lua_pop(m_LuaState, 1);
-// 	return value;
+// 	return result;
 // }
 
+//format： getLua_Int("is", 2, "3");
 int LuaCell::getLua_Int( const char* signString, ... )
 {
 	va_list v1;
@@ -122,12 +139,12 @@ int LuaCell::getLua_Int( const char* signString, ... )
 		}
 		switch (*signString++)
 		{
-		case 'i':
-			lua_pushinteger(m_LuaState, va_arg(v1, int));
-			lua_gettable(m_LuaState, -2);
-			break;
 		case 's':
 			lua_pushstring(m_LuaState, va_arg(v1, char*));
+			lua_gettable(m_LuaState, -2);
+			break;
+		case 'i':
+			lua_pushinteger(m_LuaState, va_arg(v1, int));
 			lua_gettable(m_LuaState, -2);
 			break;
 		default:
@@ -138,20 +155,12 @@ int LuaCell::getLua_Int( const char* signString, ... )
 		}
 	}
 	va_end(v1);
-	int value = lua_tointeger(m_LuaState, -1);
+	int result = lua_tointeger(m_LuaState, -1);
 	lua_pop(m_LuaState, narg);
-	return value;
+	return result;
 }
 
-// float LuaCell::getLua_Float(const char* variable)
-// {
-// 	lua_getglobal(m_LuaState, variable);
-// 	float value = (float)lua_tonumber(m_LuaState, -1);
-// 	lua_pop(m_LuaState, 1);
-// 	return value;
-// }
-
-float LuaCell::getLua_Float( const char* signString, ... )
+double LuaCell::getLua_Double( const char* signString, ... )
 {
 	va_list v1;
 	int narg;
@@ -182,18 +191,10 @@ float LuaCell::getLua_Float( const char* signString, ... )
 		}
 	}
 	va_end(v1);
-	float value = (float)lua_tonumber(m_LuaState, -1);
+	double result = lua_tonumber(m_LuaState, -1);
 	lua_pop(m_LuaState, narg);
-	return value;
+	return result;
 }
-
-// const char* LuaCell::getLua_CharPtr(const char* variable)
-// {
-// 	lua_getglobal(m_LuaState, variable);
-// 	const char* value = lua_tostring(m_LuaState, -1);
-// 	lua_pop(m_LuaState, 1);
-// 	return value;
-// }
 
 const char* LuaCell::getLua_CharPtr( const char* signString, ... )
 {
@@ -226,377 +227,224 @@ const char* LuaCell::getLua_CharPtr( const char* signString, ... )
 		}
 	}
 	va_end(v1);
-	const char* value = lua_tostring(m_LuaState, -1);
+	const char* result = lua_tostring(m_LuaState, -1);
 	lua_pop(m_LuaState, narg);
-	return value;
-}
-
-int LuaCell::getLua_TableInt(const char* table, const char* variable)
-{
-	lua_getglobal(m_LuaState, table);
-	// 	if (!lua_istable(m_LuaState,-1)) //錯誤處理
-	// 	{
-	// 		lua_pop(m_LuaState, 1);
-	// 		return NULL;		
-	// 	}
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	int value = lua_tointeger(m_LuaState, -1);
-	lua_pop(m_LuaState, 2);
-	return value;
-}
-
-int LuaCell::getLua_TableInt( const char* table, const int variable )
-{
-	lua_getglobal(m_LuaState, table);
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	int value = lua_tointeger(m_LuaState, -1);
-	lua_pop(m_LuaState, 2);
-	return value;
-}
-
-float LuaCell::getLua_TableFloat(const char* table, const char* variable)
-{
-	lua_getglobal(m_LuaState, table);
-	if (!lua_istable(m_LuaState,-1)) return NULL;
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	float value = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 2);
-	return value;
-}
-
-float LuaCell::getLua_TableFloat( const char* table, const int variable )
-{
-	lua_getglobal(m_LuaState, table);
-	if (!lua_istable(m_LuaState,-1)) return NULL;
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	float value = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 2);
-	return value;
-}
-const char* LuaCell::getLua_TableCharPtr(const char* table, const char* variable)
-{
-	lua_getglobal(m_LuaState, table);
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	const char* value = lua_tostring(m_LuaState, -1);
-	lua_pop(m_LuaState, 2);
-	return value;
-}
-
-const char* LuaCell::getLua_TableCharPtr( const char* table, const int variable )
-{
-	lua_getglobal(m_LuaState, table);
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	const char* value = lua_tostring(m_LuaState, -1);
-	lua_pop(m_LuaState, 2);
-	return value;
-}
-int LuaCell::getLua_TableTableInt(const char* table1, const char* table2, const char* variable)
-{
-	lua_getglobal(m_LuaState, table1);
-	// 	if (!lua_istable(m_LuaState,-1)) //錯誤處理
-	// 	{
-	// 		lua_pop(m_LuaState, 1);
-	// 		return NULL;		
-	// 	}
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	// 	if (!lua_istable(m_LuaState,-1)) //錯誤處理
-	// 	{
-	// 		lua_pop(m_LuaState, 1);
-	// 		return NULL;		
-	// 	}
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	int value = lua_tointeger(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-
-int LuaCell::getLua_TableTableInt( const char* table1, const char* table2, const int variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	int value = lua_tointeger(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-
-int LuaCell::getLua_TableTableInt( const char* table1, const int table2, const char* variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushinteger(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	int value = lua_tointeger(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-float LuaCell::getLua_TableTableFloat(const char* table1, const char* table2, const char* variable)
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	float value = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-
-float LuaCell::getLua_TableTableFloat( const char* table1, const char* table2, const int variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	float value = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-
-float LuaCell::getLua_TableTableFloat( const char* table1, const int table2, const char* variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushinteger(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	float value = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-const char* LuaCell::getLua_TableTableCharPtr(const char* table1, const char* table2, const char* variable)
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	const char* value = lua_tostring(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-
-const char* LuaCell::getLua_TableTableCharPtr( const char* table1, const char* table2, const int variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	const char* value = lua_tostring(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-
-const char* LuaCell::getLua_TableTableCharPtr( const char* table1, const int table2, const char* variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushinteger(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	const char* value = lua_tostring(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
-	return value;
-}
-fRect LuaCell::getLua_TablefRect( const char* table, const char* rect )
-{
-	lua_getglobal(m_LuaState, table);
-	lua_pushstring(m_LuaState, rect);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, "left");
-	lua_gettable(m_LuaState, -2);
-	fRect result;
-	result.left = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "right");
-	lua_gettable(m_LuaState, -2);
-	result.right = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "top");
-	lua_gettable(m_LuaState, -2);
-	result.top = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "bottom");
-	lua_gettable(m_LuaState, -2);
-	result.bottom = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
 	return result;
 }
 
-fRect LuaCell::getLua_TableTablefRect( const char* table1, const char* table2, const char* rect )
+void LuaCell::setLua_Int(const char* variable, int result)
 {
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, rect);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, "left");
-	lua_gettable(m_LuaState, -2);
-	fRect result;
-	result.left = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "right");
-	lua_gettable(m_LuaState, -2);
-	result.right = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "top");
-	lua_gettable(m_LuaState, -2);
-	result.top = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "bottom");
-	lua_gettable(m_LuaState, -2);
-	result.bottom = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 4);
+	lua_pushinteger(m_LuaState, result);
+	lua_setglobal(m_LuaState, variable);
+}
+//從 table1\table2\table3\varableName 這樣的路徑中得到資料的函數
+int LuaCell::getLua_Int( const char* pathString )
+{
+	char path[250] = {0};
+	const char *pos;
+	char *target = path;
+	int pathLayer = 0;
+	int result;
+	for (pos = pathString;pos != '\0';pos++)
+	{
+		if (*pos == '\\' || *pos == '//')
+		{
+			++pathLayer;
+			*target = '\0';
+			lua_pushstring(m_LuaState, path);
+			lua_gettable(m_LuaState, -2);
+			memset(path,0,sizeof(path));
+			target = path;
+		}
+		else if (*pos == '\0')
+		{
+			++pathLayer;
+			lua_pushstring(m_LuaState, path);
+			result = lua_tointeger(m_LuaState, -1);
+		}
+		else
+		{
+			*target = *pos;
+			++target;
+		}
+	}
+	lua_pop(m_LuaState, pathLayer);
 	return result;
 }
 
-fRect LuaCell::getLua_TableTablefRect( const char* table1, const int table2, const char* rect )
+double LuaCell::getLua_Double( const char* pathString )
 {
-	lua_getglobal(m_LuaState, table1);
-	lua_pushinteger(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, rect);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, "left");
-	lua_gettable(m_LuaState, -2);
-	fRect result;
-	result.left = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "right");
-	lua_gettable(m_LuaState, -2);
-	result.right = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "top");
-	lua_gettable(m_LuaState, -2);
-	result.top = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "bottom");
-	lua_gettable(m_LuaState, -2);
-	result.bottom = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 4);
-	return result;
-}
-fRect LuaCell::getLua_fRect( const char* rect )
-{
-	lua_getglobal(m_LuaState, rect);
-	lua_pushstring(m_LuaState, "left");
-	lua_gettable(m_LuaState, -2);
-	fRect result;
-	result.left = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "right");
-	lua_gettable(m_LuaState, -2);
-	result.right = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "top");
-	lua_gettable(m_LuaState, -2);
-	result.top = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 1);
-	lua_pushstring(m_LuaState, "bottom");
-	lua_gettable(m_LuaState, -2);
-	result.bottom = (float)lua_tonumber(m_LuaState, -1);
-	lua_pop(m_LuaState, 3);
+	char path[250] = {0};
+	const char *pos;
+	char *target = path;
+	int pathLayer = 0;
+	double result;
+	for (pos = pathString;pos != '\0';pos++)
+	{
+		if (*pos == '\\' || *pos == '//')
+		{
+			++pathLayer;
+			*target = '\0';
+			lua_pushstring(m_LuaState, path);
+			lua_gettable(m_LuaState, -2);
+			memset(path,0,sizeof(path));
+			target = path;
+		}
+		else if (*pos == '\0')
+		{
+			++pathLayer;
+			lua_pushstring(m_LuaState, path);
+			result = lua_tonumber(m_LuaState, -1);
+		}
+		else
+		{
+			*target = *pos;
+			++target;
+		}
+	}
+	lua_pop(m_LuaState, pathLayer);
 	return result;
 }
 
-void LuaCell::setLua_Int(const char* variable, int value)
+const char* LuaCell::getLua_CharPtr( const char* pathString )
 {
-	lua_pushinteger(m_LuaState, value);
+	char path[250] = {0};
+	const char *pos;
+	char *target = path;
+	int pathLayer = 0;
+	for (pos = pathString;pos != '\0';pos++)
+	{
+		if (*pos == '\\' || *pos == '//')
+		{
+			++pathLayer;
+			*target = '\0';
+			lua_pushstring(m_LuaState, path);
+			lua_gettable(m_LuaState, -2);
+			memset(path,0,sizeof(path));
+			target = path;
+		}
+		else if (*pos == '\0')
+		{
+			++pathLayer;
+			lua_pushstring(m_LuaState, path);
+			const char* result = lua_tostring(m_LuaState, -1);
+			lua_pop(m_LuaState, pathLayer);
+			return result;
+		}
+		else
+		{
+			*target = *pos;
+			++target;
+		}
+	}
+	return NULL;
+}
+
+void LuaCell::setLua_Int( const char* pathString, int data, ... )
+{
+	char path[250] = {0};
+	const char *pos;
+	char *target = path;
+	int pathLayer = 0;
+	for (pos = pathString; pos != '\0';pos++)
+	{
+		if (*pos == '\\' || *pos == '//')
+		{
+			++pathLayer;
+			*target = '\0';
+			lua_pushstring(m_LuaState, path);
+			lua_gettable(m_LuaState, -2);
+			memset(path,0,sizeof(path));
+			target = path;
+		}
+		else if (*pos == '\0')
+		{
+			++pathLayer;			
+			lua_pushinteger(m_LuaState, data);
+			lua_setfield(m_LuaState, -2, path);
+			lua_pop(m_LuaState, pathLayer);
+		}
+		else
+		{
+			*target = *pos;
+			++target;
+		}
+	}
+}
+void LuaCell::setLua_Double(const char* variable, float result)
+{
+	lua_pushnumber(m_LuaState, result);
 	lua_setglobal(m_LuaState, variable);
 }
 
-void LuaCell::setLua_Float(const char* variable, float value)
+void LuaCell::setLua_Double( const char* pathString, float data, ... )
 {
-	lua_pushnumber(m_LuaState, value);
+	char path[250] = {0};
+	const char *pos;
+	char *target = path;
+	int pathLayer = 0;
+	for (pos = pathString; pos != '\0';pos++)
+	{
+		if (*pos == '\\' || *pos == '//')
+		{
+			++pathLayer;
+			*target = '\0';
+			lua_pushstring(m_LuaState, path);
+			lua_gettable(m_LuaState, -2);
+			memset(path,0,sizeof(path));
+			target = path;
+		}
+		else if (*pos == '\0')
+		{
+			++pathLayer;			
+			lua_pushnumber(m_LuaState, data);
+			lua_setfield(m_LuaState, -2, path);
+			lua_pop(m_LuaState, pathLayer);
+		}
+		else
+		{
+			*target = *pos;
+			++target;
+		}
+	}
+}
+void LuaCell::setLua_CharPtr( const char* variable, const char* result )
+{
+	lua_pushstring(m_LuaState, result);
 	lua_setglobal(m_LuaState, variable);
 }
 
-void LuaCell::setLua_CharPtr( const char* variable, const char* value )
+void LuaCell::setLua_CharPtr( const char* pathString, const char* data, ... )
 {
-	lua_pushstring(m_LuaState, value);
-	lua_setglobal(m_LuaState, variable);
+	char path[250] = {0};
+	const char *pos;
+	char *target = path;
+	int pathLayer = 0;
+	for (pos = pathString; pos != '\0';pos++)
+	{
+		if (*pos == '\\' || *pos == '//')
+		{
+			++pathLayer;
+			*target = '\0';
+			lua_pushstring(m_LuaState, path);
+			lua_gettable(m_LuaState, -2);
+			memset(path,0,sizeof(path));
+			target = path;
+		}
+		else if (*pos == '\0')
+		{
+			++pathLayer;		
+			lua_pushstring(m_LuaState, data);
+			lua_setfield(m_LuaState, -2, path);
+			lua_pop(m_LuaState, pathLayer);
+		}
+		else
+		{
+			*target = *pos;
+			++target;
+		}
+	}
 }
-
-void LuaCell::setLua_TableInt( const char* table, const char* variable, int value )
-{
-	lua_getglobal(m_LuaState, table);
-	// 	if (lua_istable(m_LuaState,-1)) //錯誤處理
-	// 	{
-	lua_pushinteger(m_LuaState, value);
-	lua_setfield(m_LuaState, -2, variable);
-	lua_pop(m_LuaState, 1);
-	// 	}
-	// 	lua_pop(m_LuaState, 1);
-	// 	return false;
-}
-
-void LuaCell::setLua_TableFloat( const char* table, const char* variable, float value )
-{
-	lua_getglobal(m_LuaState, table);
-	lua_pushnumber(m_LuaState, value);
-	lua_setfield(m_LuaState, -2, variable);
-	lua_pop(m_LuaState, 1);
-}
-
-void LuaCell::setLua_TableCharPtr( const char* table, const char* variable, const char* value )
-{
-	lua_getglobal(m_LuaState, table);
-	lua_pushstring(m_LuaState, value);
-	lua_setfield(m_LuaState, -2, variable);
-	lua_pop(m_LuaState, 1);
-}
-
-void LuaCell::setLua_TableTableInt( const char* table1, const char* table2, const char* variable, int value )
-{
-	lua_getglobal(m_LuaState, table1);
-	// 	if (lua_istable(m_LuaState,-1)) //錯誤處理
-	// 	{
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	// 		if (lua_istable(m_LuaState,-1))
-	// 		{
-	lua_pushinteger(m_LuaState, value);
-	lua_setfield(m_LuaState, -2, variable);
-	lua_pop(m_LuaState, 2);
-	// 		}
-	// 	}
-	// 	lua_pop(m_LuaState, 1);
-	// 	return false;
-}
-
-void LuaCell::setLua_TableTableFloat( const char* table1, const char* table2, const char* variable, float value )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushnumber(m_LuaState, value);
-	lua_setfield(m_LuaState, -2, variable);
-	lua_pop(m_LuaState, 2);
-}
-
-void LuaCell::setLua_TableTableCharPtr( const char* table1, const char* table2, const char* variable, const char* value )
-{
-	lua_getglobal(m_LuaState, table1);
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	lua_pushstring(m_LuaState, value);
-	lua_setfield(m_LuaState, -2, variable);
-	lua_pop(m_LuaState, 2);
-}
-
 bool LuaCell::setLua_NewTable(const char* table)
 {
 	lua_getglobal(m_LuaState, table);
@@ -622,120 +470,5 @@ bool LuaCell::checkLua_ValueIsNil(const char* variable)
 	else
 		answer = false;
 	lua_pop(m_LuaState, 1);
-	return answer;
-}
-
-bool LuaCell::checkLua_TableValueIsNil(const char* table, const char* variable)
-{
-	lua_getglobal(m_LuaState, table);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 1);
-		return true;		
-	}
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	bool answer = true;
-	if (lua_isnil(m_LuaState, -1))
-		answer = true;
-	else
-		answer = false;
-	lua_pop(m_LuaState, 2);
-	return answer;	
-}
-
-bool LuaCell::checkLua_TableValueIsNil( const char* table, const int variable )
-{
-	lua_getglobal(m_LuaState, table);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 1);
-		return true;		
-	}
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	bool answer = true;
-	if (lua_isnil(m_LuaState, -1))
-		answer = true;
-	else
-		answer = false;
-	lua_pop(m_LuaState, 2);
-	return answer;	
-}
-bool LuaCell::checkLua_TableTableValueIsNil(const char* table1, const char* table2, const char* variable)
-{
-	lua_getglobal(m_LuaState, table1);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 1);
-		return true;		
-	}
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 2);
-		return true;		
-	}
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	bool answer = true;
-	if (lua_isnil(m_LuaState, -1))
-		answer = true;
-	else
-		answer = false;
-	lua_pop(m_LuaState, 3);
-	return answer;
-}
-
-bool LuaCell::checkLua_TableTableValueIsNil( const char* table1, const int table2, const char* variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 1);
-		return true;		
-	}
-	lua_pushinteger(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 2);
-		return true;		
-	}
-	lua_pushstring(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	bool answer = true;
-	if (lua_isnil(m_LuaState, -1))
-		answer = true;
-	else
-		answer = false;
-	lua_pop(m_LuaState, 3);
-	return answer;
-}
-
-bool LuaCell::checkLua_TableTableValueIsNil( const char* table1, const char* table2, const int variable )
-{
-	lua_getglobal(m_LuaState, table1);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 1);
-		return true;		
-	}
-	lua_pushstring(m_LuaState, table2);
-	lua_gettable(m_LuaState, -2);
-	if (!lua_istable(m_LuaState,-1)) 
-	{
-		lua_pop(m_LuaState, 2);
-		return true;		
-	}
-	lua_pushinteger(m_LuaState, variable);
-	lua_gettable(m_LuaState, -2);
-	bool answer = true;
-	if (lua_isnil(m_LuaState, -1))
-		answer = true;
-	else
-		answer = false;
-	lua_pop(m_LuaState, 3);
 	return answer;
 }
